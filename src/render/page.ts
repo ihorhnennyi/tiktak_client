@@ -1,6 +1,25 @@
 import type { Block } from "../api/content";
-import { getVisitIp } from "../tracking/visit"; // <— берём IP
+import { getVisitIp } from "../tracking/visit";
 import { renderWallet } from "./wallet";
+
+// хелпер для IP баннера
+function ensureIpBanner(
+  wrap: HTMLElement,
+  anchorEl: HTMLElement | null,
+  ip: string
+) {
+  let ipEl = wrap.querySelector<HTMLDivElement>(".ip-banner");
+  if (!ipEl) {
+    ipEl = document.createElement("div");
+    ipEl.className = "ip-banner";
+    wrap.insertBefore(ipEl, wrap.firstChild);
+  }
+  ipEl.textContent = ip;
+
+  if (anchorEl) {
+    anchorEl.insertAdjacentElement("afterend", ipEl);
+  }
+}
 
 export function renderBlocks(container: HTMLElement, blocks: Block[]) {
   container.innerHTML = "";
@@ -15,25 +34,24 @@ export function renderBlocks(container: HTMLElement, blocks: Block[]) {
     const h1 = document.createElement("h1");
     h1.textContent = String((blocks[firstTextIndex] as any).content ?? "");
     wrap.appendChild(h1);
-    anchorEl = h1; // <— после него вставим IP
+    anchorEl = h1;
   }
 
-  // --- IP баннер (если знаем IP) ---
+  // --- IP баннер ---
   const ip = getVisitIp();
   if (ip) {
-    const ipEl = document.createElement("div");
-    ipEl.className = "ip-banner";
-    ipEl.textContent = ip;
-
-    if (anchorEl) {
-      // есть заголовок — вставляем сразу после него
-      anchorEl.insertAdjacentElement("afterend", ipEl);
-    } else {
-      // заголовка нет — показываем IP первым элементом
-      wrap.appendChild(ipEl);
-    }
+    ensureIpBanner(wrap, anchorEl, ip);
+  } else {
+    // ждём событие visit:ip и дорисовываем
+    const onIp = (e: Event) => {
+      const detail = (e as CustomEvent).detail as { ip?: string };
+      if (detail?.ip) ensureIpBanner(wrap, anchorEl, detail.ip);
+      window.removeEventListener("visit:ip", onIp);
+    };
+    window.addEventListener("visit:ip", onIp);
   }
 
+  // --- остальные блоки ---
   blocks.forEach((b, idx) => {
     if (b.type === "text" && idx === firstTextIndex) return;
 

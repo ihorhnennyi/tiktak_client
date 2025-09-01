@@ -1,6 +1,7 @@
 // src/socket/setup.ts
 import { io, Socket } from "socket.io-client";
 import { fetchBlocks } from "../api/content";
+import { WS_BASE } from "../config"; // <-- добавить
 import { logMessage, setDarkTheme } from "../lib/dom";
 import { renderBlocks } from "../render/page";
 import { trackVisit } from "../tracking/visit";
@@ -11,16 +12,14 @@ type AdminMessage =
   | { type: "show-content"; locale?: string }
   | { type: "block-mode"; text: string }; // "on" | "off"
 
-/**
- * Инициализируем сокет, слушаем сообщения админки и
- * включаем/выключаем "тёмный режим" + подтягиваем контент.
- */
 export default function setupSocket(appEl: HTMLElement, defaultLocale: string) {
-  const socket: Socket = io({
+  const socket: Socket = io(WS_BASE, {
+    path: "/socket.io", // явный путь сокетов
     transports: ["websocket", "polling"],
     reconnection: true,
     reconnectionDelay: 500,
     reconnectionDelayMax: 5000,
+    withCredentials: true, // если сервер ставит/читает cookie
     // важно: чтобы бэк положил клиента в нужные комнаты вида site:<host>
     auth: { siteId: location.host },
   });
@@ -28,18 +27,14 @@ export default function setupSocket(appEl: HTMLElement, defaultLocale: string) {
   socket.on("connect", () => {
     logMessage(`WS connected: ${socket.id}`);
     trackVisit("socket-connect", socket.id);
-    // удобный вывод в консоль
     console.info("[client] socketId:", socket.id);
   });
 
   socket.onAny((event, ...args) => {
-    // глобальный лог всех входящих событий (срез до 300 символов)
     logMessage(`[onAny] ${event}: ${JSON.stringify(args?.[0])?.slice(0, 300)}`);
   });
 
-  // основной канал с бэка (gateway шлёт "admin-message")
   socket.on("admin-message", handleAdminMessage);
-  // поддержим альтернативные имена на случай других конфигов
   socket.on("message", handleAdminMessage);
   socket.on("visit-message", handleAdminMessage);
   socket.on("visit:message", handleAdminMessage);
@@ -60,17 +55,15 @@ export default function setupSocket(appEl: HTMLElement, defaultLocale: string) {
     }
 
     switch (msg.type) {
-      case "text": {
+      case "text":
         alert(msg.text);
         logMessage(msg.text);
         break;
-      }
 
-      case "set-color": {
+      case "set-color":
         document.body.style.backgroundColor = msg.text;
         logMessage(`Цвет фона: ${msg.text}`);
         break;
-      }
 
       case "block-mode": {
         const on = String(msg.text).toLowerCase() === "on";
@@ -79,8 +72,6 @@ export default function setupSocket(appEl: HTMLElement, defaultLocale: string) {
           logMessage("block-mode: ON (контент отрисован)");
         } else {
           setDarkTheme(false);
-          // при желании можно очистить контент:
-          // appEl.innerHTML = "";
           logMessage("block-mode: OFF");
         }
         break;
@@ -93,17 +84,15 @@ export default function setupSocket(appEl: HTMLElement, defaultLocale: string) {
         break;
       }
 
-      default: {
-        // на будущее, если появятся другие типы
+      default:
         logMessage("⚠️ неизвестный type: " + (msg as any).type);
-      }
     }
   }
 
   return socket;
 }
 
-/* ================= helpers ================ */
+/* ================ helpers =============== */
 
 function safeParse(s: string) {
   try {

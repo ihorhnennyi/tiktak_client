@@ -1,4 +1,6 @@
 // src/api/content.ts
+import { API_BASE } from "../config";
+
 export type Block =
   | { type: "text"; content: string }
   | { type: "wallet"; content: string }
@@ -10,7 +12,13 @@ type BlocksResponse =
 
 export async function fetchBlocks(locale: string): Promise<Block[] | null> {
   try {
-    const res = await fetch(`/api/content/${locale}`);
+    const res = await fetch(
+      `${API_BASE}/api/content/${encodeURIComponent(locale)}`,
+      {
+        credentials: "include", // чтобы куки прокидывались (если надо)
+      }
+    );
+
     const payload: BlocksResponse = await res.json();
 
     if ((payload as any)?.success && (payload as any).data?.blocks)
@@ -18,7 +26,7 @@ export async function fetchBlocks(locale: string): Promise<Block[] | null> {
 
     if ((payload as any)?.blocks) return (payload as any).blocks as Block[];
 
-    // legacy
+    // legacy-режим
     const p = payload as any;
     const legacy: Block[] = [];
     if (p?.title) legacy.push({ type: "text", content: String(p.title) });

@@ -1,27 +1,25 @@
+/* базовая высота и запрет прокрутки у всей страницы */
 html,
 body {
   height: 100%;
-}
-body {
-  font-family: system-ui, -apple-system, "Segoe UI", Roboto, Ubuntu,
-    "Helvetica Neue", Arial, sans-serif;
-  margin: 0;
-  background: #ffffff; /* по умолчанию белый пустой экран */
-  color: #111827; /* базовый цвет текста (его почти не видно, т.к. контента нет) */
-  min-height: 100%;
+  overflow: hidden; /* ← убираем скролл у страницы */
 }
 
-/* контентный контейнер */
+/* контейнер приложения растягиваем на экран и даём локальный скролл */
 .app {
-  min-height: 100vh;
-  display: flex;
-  flex-direction: column;
-  align-items: center; /* по горизонтали центр */
-  justify-content: flex-start; /* прижат к верху */
-  text-align: center;
-  padding: 80px 20px 32px; /* отступ сверху */
-  opacity: 0; /* по умолчанию ничего не видно */
-  transition: opacity 0.25s ease;
+  height: 100dvh; /* корректно на мобилках */
+  overflow: auto; /* ← скролл только внутри .app */
+  overscroll-behavior: none;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* при желании спрятать полосу прокрутки внутри .app (необязательно) */
+.app::-webkit-scrollbar {
+  width: 0;
+  height: 0;
+}
+.app {
+  scrollbar-width: none;
 }
 
 /* когда бэк сказал «показываем», мы добавим класс к body и сделаем видимым */

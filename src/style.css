@@ -1,31 +1,42 @@
+* {
+  box-sizing: border-box;
+}
+
 html,
 body {
   height: 100%;
-  overflow: hidden;
+  overflow: hidden; /* страницы не скроллятся */
   background: #0f1115;
   color: #e5e7eb;
+  overscroll-behavior: none; /* без резиновых рывков */
+  touch-action: none; /* запрет жестов на корне (разрешим ниже) */
 }
 
+/* Корневой блок */
 .app {
-  height: 100dvh;
-  overflow: hidden;
+  height: 100svh; /* корректная высота на мобилках */
   display: grid;
   place-items: start center;
   padding: 20px 12px;
+  overflow: hidden; /* внутри только контейнер скроллится */
 }
 
+/* Контентный контейнер: единственное место, где можно скроллить */
 .app > .container {
   width: min(680px, 96vw);
-  max-height: calc(100dvh - 40px);
+  max-height: calc(100svh - 40px);
   overflow: auto;
   scrollbar-width: none;
+  overscroll-behavior: contain; /* без протяжки всей страницы */
+  -webkit-overflow-scrolling: touch;
+  touch-action: pan-y; /* разрешаем только вертикальный скролл */
 }
-
 .app > .container::-webkit-scrollbar {
   width: 0;
   height: 0;
 }
 
+/* Типографика */
 h1 {
   margin: 0 0 12px;
   line-height: 1.15;

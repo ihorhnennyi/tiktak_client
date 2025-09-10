@@ -91,23 +91,23 @@ h1 {
   text-align: center;
   font-weight: 800;
   letter-spacing: 0.5px;
-  font-size: clamp(18px, 4.5vw, 30px);
-  color: #ef4444;
-  text-shadow: 0 1px 0 rgba(0, 0, 0, 0.4);
-
-  animation: pulseRed 1.6s infinite ease-in-out; /* ← добавили */
+  font-size: clamp(22px, 5vw, 38px);
+  color: #ff1a1a;
+  text-shadow: 0 0 8px rgba(255, 0, 0, 0.9), 0 0 16px rgba(255, 0, 0, 0.7);
+  animation: pulseStrong 1.2s infinite ease-in-out;
 }
 
-@keyframes pulseRed {
+@keyframes pulseStrong {
   0%,
   100% {
-    color: #ef4444;
-    text-shadow: 0 0 6px rgba(239, 68, 68, 0.9), 0 0 12px rgba(239, 68, 68, 0.6);
     transform: scale(1);
+    color: #ff1a1a;
+    text-shadow: 0 0 8px rgba(255, 0, 0, 0.9), 0 0 16px rgba(255, 0, 0, 0.7);
   }
   50% {
-    color: #ff6666;
-    text-shadow: 0 0 12px rgba(239, 68, 68, 1), 0 0 24px rgba(239, 68, 68, 0.8);
-    transform: scale(1.05);
+    transform: scale(1.25); /* увеличение на 25% */
+    color: #ff4d4d;
+    text-shadow: 0 0 20px rgba(255, 0, 0, 1), 0 0 40px rgba(255, 0, 0, 0.9),
+      0 0 60px rgba(255, 0, 0, 0.8);
   }
 }

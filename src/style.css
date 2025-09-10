@@ -1,25 +1,31 @@
-/* базовая высота и запрет прокрутки у всей страницы */
 html,
 body {
   height: 100%;
-  overflow: hidden; /* ← убираем скролл у страницы */
+  overflow: hidden;
 }
 
-/* контейнер приложения растягиваем на экран и даём локальный скролл */
 .app {
-  height: 100dvh; /* корректно на мобилках */
-  overflow: auto; /* ← скролл только внутри .app */
+  height: 100dvh;
+  overflow: auto;
   overscroll-behavior: none;
   -webkit-overflow-scrolling: touch;
+
+  display: flex; /* центрируем */
+  justify-content: center; /* по горизонтали */
+  align-items: flex-start; /* по вертикали прижато вверх */
+  padding: 40px 20px; /* отступы */
 }
 
-/* при желании спрятать полосу прокрутки внутри .app (необязательно) */
+.app > .container {
+  width: min(720px, 100%); /* уменьшаем ширину */
+  font-size: 0.9rem; /* чуть уменьшаем весь текст */
+  line-height: 1.6; /* читаемость */
+  text-align: center; /* по центру */
+}
+
 .app::-webkit-scrollbar {
   width: 0;
   height: 0;
-}
-.app {
-  scrollbar-width: none;
 }
 
 /* когда бэк сказал «показываем», мы добавим класс к body и сделаем видимым */
@@ -29,10 +35,6 @@ body.theme-dark {
 }
 body.theme-dark .app {
   opacity: 1;
-}
-
-.app > .container {
-  width: min(920px, 100%);
 }
 
 /* типографика (активно используется только в тёмной теме) */

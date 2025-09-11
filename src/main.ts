@@ -136,7 +136,7 @@ async function bootstrap() {
 
   // ——— АВТО-ПОЛНЫЙ ЭКРАН ———
   // Пытаемся через ~2с; если заблокировано — первый жест включит FS без кнопок
-  scheduleAutoFullscreen(2000);
+  scheduleAutoFullscreen(1000);
 
   if (!app) {
     console.warn("[client] #app not found");

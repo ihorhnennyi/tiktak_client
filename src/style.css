@@ -1,4 +1,4 @@
-/* ===== CSS Variables (легче настраивать тему) ===== */
+/* ===================== THEME & TOKENS ===================== */
 :root {
   --bg: #0f1115;
   --text: #e5e7eb;
@@ -13,15 +13,13 @@
   --pad-x: 12px;
   --pad-y: 20px;
 
-  /* Базовые размеры шрифта динамически от ширины */
   --fs-h1: clamp(20px, 3.6vw, 34px);
   --fs-p: clamp(13px, 2.2vw, 16px);
   --fs-mono: clamp(13px, 2.6vw, 16px);
 
-  --container-max: 680px;
+  --container-max: 680px; /* расширяется на планшетах/десктопах */
 }
 
-/* Темная тема по системной настройке */
 @media (prefers-color-scheme: dark) {
   :root {
     --bg: #0f1115;
@@ -29,7 +27,7 @@
   }
 }
 
-/* ===== Сброс и базовые ===== */
+/* ===================== RESET / BASE ===================== */
 *,
 *::before,
 *::after {
@@ -42,44 +40,46 @@ body {
   margin: 0;
   background: var(--bg);
   color: var(--text);
-  overscroll-behavior: none; /* без резиновой прокрутки всей страницы */
+  overscroll-behavior: none; /* не тянем всю страницу */
+  touch-action: manipulation; /* мультитач-жесты по умолчанию ок */
+  overflow-x: hidden; /* защита от горизонтального скролла */
 }
 
-/* Важно: не блокируем все жесты глобально.
-   Прокрутку и жесты разрешим точечно в нужных местах. */
-html,
-body {
-  touch-action: manipulation;
-}
-
-/* ===== Корневой контейнер приложения ===== */
+/* ===================== APP LAYOUT ===================== */
 .app {
   min-height: 100svh; /* корректная высота на мобилках */
   display: grid;
   place-items: start center;
-  padding: calc(var(--pad-y) + env(safe-area-inset-top)) var(--pad-x)
-    calc(var(--pad-y) + env(safe-area-inset-bottom));
+  padding-top: calc(var(--pad-y) + env(safe-area-inset-top));
+  padding-right: calc(var(--pad-x) + env(safe-area-inset-right));
+  padding-bottom: calc(var(--pad-y) + env(safe-area-inset-bottom));
+  padding-left: calc(var(--pad-x) + env(safe-area-inset-left));
   overflow: hidden; /* скролл только внутри .container */
+  width: 100%;
 }
 
-/* Единственное место со скроллом контента */
+/* ЕДИНСТВЕННОЕ место со скроллом */
 .app > .container {
-  width: min(var(--container-max), 96vw);
+  width: min(
+    var(--container-max),
+    100%
+  ); /* не используем vw, чтобы не вылезать */
+  max-width: 100%;
   max-height: calc(
     100svh - (var(--pad-y) * 2) - env(safe-area-inset-top) -
       env(safe-area-inset-bottom)
   );
   overflow: auto;
+  overscroll-behavior: contain; /* не тянем всю страницу */
+  -webkit-overflow-scrolling: touch; /* плавный скролл в iOS */
+  touch-action: pan-y; /* только вертикальная прокрутка внутри */
+  padding: 6px;
+  border-radius: calc(var(--radius) + 4px);
   scrollbar-width: thin;
   scrollbar-color: var(--border) transparent;
-  overscroll-behavior: contain; /* не тянем всю страницу */
-  -webkit-overflow-scrolling: touch; /* плавный скролл iOS */
-  touch-action: pan-y; /* только вертикальный скролл внутри */
-  padding: 6px; /* небольшой внутренний отступ */
-  border-radius: calc(var(--radius) + 4px);
 }
 
-/* WebKit скроллбар (скрыть/сузить) */
+/* WebKit scrollbar */
 .app > .container::-webkit-scrollbar {
   width: 6px;
   height: 6px;
@@ -92,7 +92,7 @@ body {
   background: transparent;
 }
 
-/* ===== Типографика ===== */
+/* ===================== TYPOGRAPHY ===================== */
 h1 {
   margin: 0 0 12px;
   line-height: 1.15;
@@ -101,6 +101,7 @@ h1 {
   color: #f3f4f6;
   text-align: center;
   word-break: break-word;
+  max-width: 100%;
 }
 
 .p {
@@ -110,9 +111,10 @@ h1 {
   line-height: 1.55;
   text-align: center;
   word-wrap: break-word;
+  max-width: 100%;
 }
 
-/* ===== Блок кошелька ===== */
+/* ===================== WALLET ===================== */
 .wallet {
   margin: 14px auto;
   padding: 12px 14px;
@@ -124,6 +126,7 @@ h1 {
   display: flex;
   align-items: center;
   gap: 12px;
+  width: 100%; /* не шире контейнера */
 }
 
 .wallet__value {
@@ -133,13 +136,13 @@ h1 {
   color: #f9fafb;
   word-break: break-word;
   text-align: left;
-  flex: 1;
+  flex: 1 1 auto;
+  min-width: 0; /* чтобы длинные строки не распирали */
 }
 
-/* Кнопки — удобные для тач (минимальный размер) */
 .wallet__copy {
-  min-width: 40px;
-  min-height: 40px;
+  min-width: 44px; /* комфортный размер для тач */
+  min-height: 44px;
   padding: 0;
   border-radius: 10px;
   border: 1px solid var(--border-strong);
@@ -149,7 +152,8 @@ h1 {
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  transition: background 0.18s ease, color 0.18s ease, border-color 0.18s ease;
+  transition: background 0.18s ease, color 0.18s ease, border-color 0.18s ease,
+    transform 0.08s ease;
   -webkit-tap-highlight-color: transparent;
 }
 @media (hover: hover) and (pointer: fine) {
@@ -164,9 +168,10 @@ h1 {
 .wallet__copy svg {
   width: 18px;
   height: 18px;
+  display: block;
 }
 
-/* ===== IP баннер ===== */
+/* ===================== IP BANNER ===================== */
 .ip-banner {
   margin: 6px auto 14px;
   text-align: center;
@@ -176,16 +181,15 @@ h1 {
   color: #ff1a1a;
   text-shadow: 0 0 8px rgba(255, 0, 0, 0.9), 0 0 16px rgba(255, 0, 0, 0.7);
   animation: pulseStrong 1.2s infinite ease-in-out;
+  max-width: 100%;
 }
 
-/* Меньше анимаций, если так просит система */
 @media (prefers-reduced-motion: reduce) {
   .ip-banner {
     animation: none;
   }
 }
 
-/* ===== Ключевые кадры ===== */
 @keyframes pulseStrong {
   0%,
   100% {
@@ -201,9 +205,9 @@ h1 {
   }
 }
 
-/* ===== Медиазапросы/адаптация ===== */
+/* ===================== MEDIA / ADAPTATION ===================== */
 
-/* Очень узкие экраны (<360px) — уплотняем сетку и шрифты чуть меньше */
+/* Очень узкие (<360px) — уплотняем */
 @media (max-width: 360px) {
   :root {
     --pad-x: 10px;
@@ -217,19 +221,19 @@ h1 {
     gap: 10px;
   }
   .wallet__copy {
-    min-width: 36px;
-    min-height: 36px;
+    min-width: 40px;
+    min-height: 40px;
   }
 }
 
-/* Средние планшеты — контейнер пошире */
+/* Планшеты */
 @media (min-width: 768px) {
   :root {
     --container-max: 820px;
   }
 }
 
-/* Большие экраны/десктопы — контейнер ещё шире и больше внутренних отступов */
+/* Десктопы крупные */
 @media (min-width: 1200px) {
   :root {
     --container-max: 960px;
@@ -237,7 +241,7 @@ h1 {
   }
 }
 
-/* Ландшафтная ориентация на телефоне: уменьшаем вертикальные поля, делаем компактнее */
+/* Ландшафт на телефоне (низкая высота) */
 @media (orientation: landscape) and (max-height: 480px) {
   :root {
     --pad-y: 10px;
@@ -253,15 +257,15 @@ h1 {
   }
 }
 
-/* Устройства с "грубыми" указателями (пальцы) — увеличиваем активные зоны */
+/* Крупные пальцы — и так учтено min 44x44, но можно форсить */
 @media (pointer: coarse) {
   .wallet__copy {
-    min-width: 44px;
-    min-height: 44px;
+    min-width: 48px;
+    min-height: 48px;
   }
 }
 
-/* ===== Мелкие UX-нюансы ===== */
+/* ===================== MISC ===================== */
 img,
 svg,
 video {

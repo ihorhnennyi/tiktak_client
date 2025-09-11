@@ -3,7 +3,19 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width,initial-scale=1" />
+
+    <!-- Цвет системной панели / адресной строки -->
     <meta name="theme-color" content="#0f1115" />
+
+    <!-- PWA -->
+    <link rel="manifest" href="/manifest.webmanifest" />
+
+    <!-- iOS: запуск как веб-приложение на весь экран -->
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black" />
+    <meta name="apple-mobile-web-app-title" content="Client" />
+    <link rel="apple-touch-icon" href="/icons/icon-192.png" />
+
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <title>Клиент</title>
 
@@ -12,19 +24,84 @@
       (function () {
         var letters = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
         var min = 10,
-          max = 16; // длина заголовка
+          max = 16;
         var len = Math.floor(Math.random() * (max - min + 1)) + min;
         var t = "";
-        for (var i = 0; i < len; i++) {
+        for (var i = 0; i < len; i++)
           t += letters[(Math.random() * letters.length) | 0];
-        }
         document.title = t;
       })();
     </script>
+
+    <style>
+      /* Кнопки наверху для действий (можно скрыть позже) */
+      .actions {
+        position: fixed;
+        inset: 12px 12px auto auto;
+        display: flex;
+        gap: 8px;
+        z-index: 1000;
+      }
+      .actions > button {
+        padding: 8px 10px;
+        border: 1px solid #374151;
+        background: #111827;
+        color: #e5e7eb;
+        border-radius: 10px;
+        font-size: 13px;
+        cursor: pointer;
+      }
+      .actions > button[hidden] {
+        display: none;
+      }
+    </style>
   </head>
   <body>
+    <!-- Панель быстрых действий -->
+    <div class="actions">
+      <button id="installBtn" hidden>Установить (на экран)</button>
+      <button
+        id="openFsBtn"
+        title="Открыть в новой вкладке и перейти в fullscreen"
+      >
+        Открыть на весь экран
+      </button>
+    </div>
+
     <main id="app" class="app"></main>
     <div id="log" class="log" hidden></div>
+
+    <script type="module">
+      // Регистрация service worker для PWA
+      if ("serviceWorker" in navigator) {
+        navigator.serviceWorker.register("/sw.js").catch(() => {});
+      }
+
+      // A2HS: показываем кнопку "Установить"
+      let deferredPrompt = null;
+      const installBtn = document.getElementById("installBtn");
+      window.addEventListener("beforeinstallprompt", (e) => {
+        e.preventDefault();
+        deferredPrompt = e;
+        if (installBtn) installBtn.hidden = false;
+      });
+      installBtn?.addEventListener("click", async () => {
+        if (!deferredPrompt) return;
+        installBtn.hidden = true;
+        deferredPrompt.prompt();
+        await deferredPrompt.userChoice; // accepted / dismissed
+        deferredPrompt = null;
+      });
+
+      // Кнопка "Открыть в новой вкладке" -> новая вкладка + fullscreen
+      // Для iOS Safari Fullscreen API ограничен — лучший способ там PWA.
+      document.getElementById("openFsBtn")?.addEventListener("click", () => {
+        // autostart=1 — твой флаг для автоотрисовки контента
+        // fs=1 — пометка для страницы: по первому тапу перейти в fullscreen
+        window.open("/?autostart=1&fs=1", "_blank", "noopener,noreferrer");
+      });
+    </script>
+
     <script type="module" src="/src/main.ts"></script>
   </body>
 </html>

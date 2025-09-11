@@ -28,6 +28,15 @@ function canFullscreen(): boolean {
   );
 }
 
+function isFullscreenNow(): boolean {
+  return !!(
+    document.fullscreenElement ||
+    (document as any).webkitFullscreenElement ||
+    (document as any).mozFullScreenElement ||
+    (document as any).msFullscreenElement
+  );
+}
+
 function requestFsOn(el: any): Promise<void> {
   const req =
     el?.requestFullscreen ||
@@ -37,32 +46,83 @@ function requestFsOn(el: any): Promise<void> {
 
   return req
     ? Promise.resolve(req.call(el, { navigationUI: "hide" }))
-    : Promise.reject();
+    : Promise.reject(new Error("Fullscreen API not available"));
 }
 
 async function requestFullscreenOnce() {
-  const alreadyFs =
-    document.fullscreenElement ||
-    (document as any).webkitFullscreenElement ||
-    (document as any).mozFullScreenElement ||
-    (document as any).msFullscreenElement;
-
-  if (alreadyFs || !canFullscreen()) return;
-
+  if (isFullscreenNow() || !canFullscreen()) return;
   try {
-    await requestFsOn(document.documentElement); // пробуем <html>
+    // Пробуем <html>
+    await requestFsOn(document.documentElement);
   } catch {
     try {
-      await requestFsOn(document.body); // пробуем <body> (часть мобильных)
+      // Пробуем <body> (часть мобильных)
+      await requestFsOn(document.body);
     } catch {
-      /* тихий фолбэк */
+      // Тихий фолбэк — ничего не делаем
     }
   }
 }
 
-/* навешиваем один раз: жесты, которые точно происходят по user gesture */
+/** Детект, что это уже установленная PWA (и так без адресной строки) */
+function isStandalonePWA(): boolean {
+  // Android/desktop
+  const standaloneDisplay =
+    window.matchMedia?.("(display-mode: standalone)")?.matches === true;
+  // iOS Safari
+  const iosStandalone = (navigator as any)?.standalone === true;
+  return standaloneDisplay || iosStandalone;
+}
+
+/**
+ * Пытаемся автоматически войти в fullscreen через delayMs.
+ * Если не вышло (браузер требует user-gesture), то первое ЛЮБОЕ касание
+ * на странице мгновенно включает fullscreen — без кнопок/оверлеев.
+ */
+function scheduleAutoFullscreen(delayMs = 2000) {
+  // В PWA-standalone и так "на весь экран", лишний fullscreen не нужен
+  if (isStandalonePWA()) return;
+
+  // Попытка авто-входа (может быть заблокирована политикой браузера)
+  setTimeout(async () => {
+    try {
+      await requestFullscreenOnce();
+    } catch {
+      /* ignore */
+    }
+
+    // Если не получилось — включаем "мягкий" фолбэк на первый жест
+    if (!isFullscreenNow()) {
+      const onFirstGesture = async () => {
+        document.removeEventListener("pointerdown", onFirstGesture, true);
+        document.removeEventListener("touchend", onFirstGesture, true);
+        document.removeEventListener("click", onFirstGesture, true);
+        await requestFullscreenOnce();
+      };
+      // Ставим перехватчики "рано", чтобы жест точно считался
+      document.addEventListener("pointerdown", onFirstGesture, {
+        once: true,
+        passive: true,
+        capture: true,
+      });
+      document.addEventListener("touchend", onFirstGesture, {
+        once: true,
+        passive: true,
+        capture: true,
+      });
+      document.addEventListener("click", onFirstGesture, {
+        once: true,
+        passive: true,
+        capture: true,
+      });
+    }
+  }, Math.max(0, delayMs));
+}
+
+/* ============ Подстраховка: единоразовый слушатель на всякий случай ============ */
+/* Если вдруг пользователь успеет кликнуть раньше таймера — тоже уйдём в fullscreen */
 ["pointerdown", "touchend", "click"].forEach((ev) =>
-  document.addEventListener(ev, requestFullscreenOnce, {
+  document.addEventListener(ev, () => requestFullscreenOnce(), {
     once: true,
     passive: true,
   })
@@ -73,6 +133,10 @@ async function bootstrap() {
   enableDebugFromQuery();
   scheduleVisitFallback();
   ensureAppClass(app);
+
+  // ——— АВТО-ПОЛНЫЙ ЭКРАН ———
+  // Пытаемся через ~2с; если заблокировано — первый жест включит FS без кнопок
+  scheduleAutoFullscreen(2000);
 
   if (!app) {
     console.warn("[client] #app not found");

@@ -1,4 +1,3 @@
-// src/api/content.ts
 import { API_BASE } from "../config";
 
 export type Block =
